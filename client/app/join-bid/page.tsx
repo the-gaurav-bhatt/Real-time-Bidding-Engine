@@ -1,96 +1,71 @@
-// app/bidder-dashboard/page.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { socket } from "@/socket";
 import Link from "next/link";
-// types/bid.ts
-
-export interface IBidItem {
-  _id?: string;
-  item: string;
-  startingPrice: number;
-}
-
-export interface IBid {
-  _id: string;
-  title: string;
-  items: IBidItem[];
-  creator: {
-    username: string;
-  };
-  startTime: string;
-  bidders: [string];
-  endTime: string;
-  isPublished: boolean;
-}
-
+import { IBid } from "../components/types/SocketEvents";
 const BidderDashboard: React.FC = () => {
   const [bids, setBids] = useState<IBid[]>([]);
-  const [user, setUser] = useState("");
-  const [bidderId, setBidderId] = useState("");
+  const [user, setUser] = useState<string | null>(null);
+  const [bidderId, setBidderId] = useState<string | null>(null);
   const [created, setCreated] = useState(false);
   const [invitations, setInvitations] = useState<any[]>([]);
 
-  // Fetch bids from the backend
-  useEffect(() => {
-    const fetchBids = async () => {
-      try {
-        const response = await fetch("http://localhost:8000/getAllBids");
-        if (!response.ok) {
-          throw new Error("Failed to fetch bids");
-        }
-
-        const data: IBid[] = await response.json(); // Type the response data as IBid[]
-        setBids(data); // Set bids data
-      } catch (error) {
-        console.error("Failed to fetch bids:", error);
+  // Function to fetch bids
+  const fetchBids = useCallback(async () => {
+    try {
+      const response = await fetch("http://localhost:8000/getAllBids");
+      if (!response.ok) {
+        throw new Error("Failed to fetch bids");
       }
-    };
-    const x = localStorage.getItem("bidder");
-    const y = localStorage.getItem("bidderId");
-    if (x && y) {
-      setUser(x);
-      setBidderId(y);
-      setCreated(true);
+      const data: IBid[] = await response.json();
+      setBids(data);
+    } catch (error) {
+      console.error("Failed to fetch bids:", error);
     }
-    fetchBids();
-    socket.emit("connectToUser", { userId: bidderId });
-    socket.on("invitation", (message, room) => {
-      console.log(room);
-      console.log(message);
-      console.log("Inside invitation function");
+  }, []);
+
+  // Function to handle user setup
+  const setupUser = useCallback(() => {
+    const storedUser = localStorage.getItem("bidder");
+    const storedBidderId = localStorage.getItem("bidderId");
+
+    if (storedUser && storedBidderId) {
+      setUser(storedUser);
+      setBidderId(storedBidderId);
+      setCreated(true);
+      socket.emit("connectToUser", { userId: storedBidderId });
+    }
+  }, []);
+
+  // Function to handle incoming invitations
+  const handleInvitation = useCallback(
+    (message: any, room: any) => {
+      console.log("Received invitation:", message, "in room:", room);
       if (message.invitedUserSocketId === bidderId) {
-        console.log("Invitation receiving successfully", message);
         setInvitations((prevInvitations) => [...prevInvitations, message]);
       }
-    });
-  }, [bidderId]);
+    },
+    [bidderId]
+  );
 
-  const handleAcceptInvitation = (bidId: string) => {
-    // Implement logic to accept the invitation (e.g., navigate to the bid page)
-    console.log("Accepted invitation for bid:", bidId);
-    // ... (your acceptance logic)
-    socket.emit("connectBidding", bidId, bidderId);
-    setInvitations((prevInvitations) =>
-      prevInvitations.filter((invitation) => invitation.bidId !== bidId)
-    );
-  };
+  // useEffect for initial setup and socket handling
+  useEffect(() => {
+    setupUser();
+    fetchBids();
 
-  const handleRejectInvitation = (bidId: string) => {
-    // Implement logic to reject the invitation (e.g., send a rejection message to the server)
-    console.log("Rejected invitation for bid:", bidId);
-    // ... (your rejection logic)
-    setInvitations((prevInvitations) =>
-      prevInvitations.filter((invitation) => invitation.bidId !== bidId)
-    );
-  };
+    socket.on("invitation", handleInvitation);
 
-  // Calculate the remaining time until the bid starts
+    return () => {
+      socket.off("invitation", handleInvitation);
+    };
+  }, [fetchBids, setupUser, handleInvitation]);
+
+  // Countdown logic to calculate the remaining time
   const calculateTimeRemaining = (startTime: string): string => {
     const currentTime = new Date();
     const start = new Date(startTime);
-    const timeDiff = start.getTime() - currentTime.getTime(); // Difference in milliseconds
+    const timeDiff = start.getTime() - currentTime.getTime();
 
     if (timeDiff <= 0) return "Started";
 
@@ -101,16 +76,16 @@ const BidderDashboard: React.FC = () => {
     return `${hours}h ${minutes}m ${seconds}s`;
   };
 
-  // Start the countdown
+  // useEffect for triggering the countdown update
   useEffect(() => {
     const interval = setInterval(() => {
-      setBids((prevBids) => [...prevBids]); // Trigger re-render every second
-    }, 1000); // Update every second
+      setBids((prevBids) => [...prevBids]);
+    }, 1000);
 
-    return () => clearInterval(interval); // Clean up the interval on component unmount
+    return () => clearInterval(interval);
   }, []);
 
-  const handleCreateUser = async (e: any) => {
+  const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await fetch("http://localhost:8000/createBidder", {
@@ -118,20 +93,35 @@ const BidderDashboard: React.FC = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ user: user }),
+        body: JSON.stringify({ user }),
       });
       if (!res.ok) {
         setCreated(false);
-      } else {
-        const data = await res.json();
-        setCreated(true);
-        setBidderId(data._id);
-        localStorage.setItem("bidder", user);
-        localStorage.setItem("bidderId", data._id);
+        throw new Error("Failed to create user");
       }
+      const data = await res.json();
+      setCreated(true);
+      setBidderId(data._id);
+      localStorage.setItem("bidder", user as string);
+      localStorage.setItem("bidderId", data._id);
     } catch (err) {
-      console.log(err);
+      console.error("Error creating user:", err);
     }
+  };
+
+  const handleAcceptInvitation = (bidId: string) => {
+    console.log("Accepted invitation for bid:", bidId);
+    socket.emit("connectBidding", bidId, bidderId);
+    setInvitations((prevInvitations) =>
+      prevInvitations.filter((invitation) => invitation.bidId !== bidId)
+    );
+  };
+
+  const handleRejectInvitation = (bidId: string) => {
+    console.log("Rejected invitation for bid:", bidId);
+    setInvitations((prevInvitations) =>
+      prevInvitations.filter((invitation) => invitation.bidId !== bidId)
+    );
   };
 
   return (
@@ -146,7 +136,6 @@ const BidderDashboard: React.FC = () => {
           </h1>
           <input
             name="username"
-            id=""
             onChange={(e) => setUser(e.target.value)}
             className="shadow appearance-none border rounded w-1/3 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mr-2"
           />
@@ -158,7 +147,7 @@ const BidderDashboard: React.FC = () => {
           </button>
         </div>
       )}
-      {/* Display invitations */}
+
       <div className="mt-8">
         <h2 className="text-2xl font-semibold mb-4 text-blue-500">
           Invitations
@@ -173,13 +162,13 @@ const BidderDashboard: React.FC = () => {
               <div className="mt-2">
                 <button
                   onClick={() => handleAcceptInvitation(invitation.bidId)}
-                  className="bg-green-500  px-4 py-2 rounded-md hover:bg-green-600 transition mr-2"
+                  className="bg-green-500 px-4 py-2 rounded-md hover:bg-green-600 transition mr-2"
                 >
                   Accept
                 </button>
                 <button
                   onClick={() => handleRejectInvitation(invitation.bidId)}
-                  className="bg-red-500  px-4 py-2 rounded-md hover:bg-red-600 transition"
+                  className="bg-red-500 px-4 py-2 rounded-md hover:bg-red-600 transition"
                 >
                   Reject
                 </button>
@@ -189,7 +178,7 @@ const BidderDashboard: React.FC = () => {
         </ul>
       </div>
 
-      <div className="max-w-4xl mx-auto  shadow-md rounded-lg p-6">
+      <div className="max-w-4xl mx-auto shadow-md rounded-lg p-6">
         <h2 className="text-2xl font-semibold mb-4 text-amber-700">
           Available Bids
         </h2>
@@ -203,13 +192,13 @@ const BidderDashboard: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="text-xl font-medium text-gray-800">
-                      <Link href={`/ongoing-bids/${bid._id}`}>{bid.title}</Link>{" "}
+                      <Link href={`/ongoing-bids/${bid._id}`}>{bid.title}</Link>
                     </h3>
                   </div>
                   <div>
                     <button
                       onClick={() => handleAcceptInvitation(bid._id)}
-                      className="bg-green-500  px-4 py-2 rounded-md hover:bg-green-600 transition"
+                      className="bg-green-500 px-4 py-2 rounded-md hover:bg-green-600 transition"
                     >
                       Accept Bid
                     </button>
@@ -232,7 +221,6 @@ const BidderDashboard: React.FC = () => {
                     Time Remaining: {calculateTimeRemaining(bid.startTime)}
                   </p>
                 </div>
-                {/* Check if the current bidder has accepted the bid */}
                 {bid.bidders.some(
                   (bidderIdInBid) => bidderIdInBid === bidderId
                 ) ? (

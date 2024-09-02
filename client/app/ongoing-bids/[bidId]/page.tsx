@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { socket } from "@/socket";
-import { IBidItem } from "@/app/join-bid/page";
-
+import { IBidItem } from "@/app/components/types/SocketEvents";
 interface BidItem {
   _id: string;
   item: string;
@@ -133,7 +132,7 @@ const Page = ({ params }: { params: { bidId: string } }) => {
   }
 
   return (
-    <div className="container mx-auto p-4 bg-gray-100 rounded-lg shadow-md">
+    <div className="container mt-4 mx-auto p-4 bg-gray-100 rounded-lg shadow-md">
       <h1 className="text-3xl font-bold mb-4 text-center text-blue-600">
         {bid.title}
       </h1>

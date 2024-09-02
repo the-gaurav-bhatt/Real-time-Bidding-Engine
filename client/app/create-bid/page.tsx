@@ -80,10 +80,6 @@ export default function CreateBidPage() {
       // this is used to create a room with the bidId
       socket.emit("connectBidding", bidId, bidderId);
       router.push("/creator-dashboard");
-      //   console.log(await res.json());
-      //   socket.emit("registerCreator", bidToSend);
-
-      // ... send bidToSend to your backend API
     } else {
       alert("Please fill in all fields.");
     }

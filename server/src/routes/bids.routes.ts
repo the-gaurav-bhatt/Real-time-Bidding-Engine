@@ -65,8 +65,12 @@ export const finalizeBid = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log(req.body);
-  return res.json({ message: "Received" });
+  const data = req.body;
+  // const bidId = req.params.bidId
+  // io.to(bidId).emit()
+  return res.json(data);
+  // console.log(req.body);
+  // return res.json({ message: "Received" });
 };
 export const handleGetSingleBid = async (
   req: Request,

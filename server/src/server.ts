@@ -18,6 +18,13 @@ export const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
+
+interface IInvite {
+  bitId: string;
+  invitedUserSocketId: string;
+  invitingUser: string;
+}
+
 interface BidItem {
   name: string;
   description: string;
@@ -33,10 +40,6 @@ interface BidData {
 }
 io.on("connection", (socket) => {
   console.log(`A user connected with id ${socket.id}`);
-
-  socket.on("registerCreator", (creatorName: BidData) => {
-    console.log(creatorName);
-  });
 
   socket.on("disconnect", (reason) => {
     console.log(`Client disconnected: ${socket.id}, Reason: ${reason}`);
@@ -71,16 +74,16 @@ io.on("connection", (socket) => {
     console.log("Logging Things" + bidId, itemId, price, bidder);
     io.to(bidId).emit("bidUpdate", bidId, itemId, price, bidder);
   });
+  socket.on("finalizedItem", (bidId, bid) => {
+    // console.log("Logging Things" + bidId, itemId, price, bidder);
+    io.to(bidId).emit("finalItems", bidId, bid);
+  });
   socket.on("connectToUser", (user) => {
     console.log("User connected for reacting room of his onw id ");
     console.log(user.userId);
     socket.join(user.userId);
   });
-  interface IInvite {
-    bitId: string;
-    invitedUserSocketId: string;
-    invitingUser: string;
-  }
+
   // this will send invites to the user to join Bidding event in a room that has bidId as roomId
   socket.on("inviteEvent", (invite: IInvite) => {
     console.log(invite);
@@ -90,13 +93,6 @@ io.on("connection", (socket) => {
       "sending invitation to " + invite.invitedUserSocketId + " Success...."
     );
   });
-  // console.log(socket);
-
-  // socket.emit("inviteEvent", {
-  //   invitedUser: invitedUser.username,
-  //   invitedUserSocketId: invitedUser._id, // Assuming _id is used as socket ID in production
-  //   invitingUser: currentUser,
-  // });
 });
 
 const startServer = async () => {
