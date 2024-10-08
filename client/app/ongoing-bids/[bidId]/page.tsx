@@ -48,7 +48,9 @@ const Page = ({ params }: { params: { bidId: string } }) => {
     const bider = localStorage.getItem("bidder");
     if (bider) setBidder(bider);
     const fetchBid = async () => {
-      const res = await fetch(`http://localhost:8000/getBid/${bidId}`);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/getBid/${bidId}`
+      );
       const data = await res.json();
       setBid(data);
     };
@@ -107,7 +109,7 @@ const Page = ({ params }: { params: { bidId: string } }) => {
   const finalizeBids = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8000/finalizeBid/${bidId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/finalizeBid/${bidId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -14,7 +14,9 @@ const BidderDashboard: React.FC = () => {
   // Function to fetch bids
   const fetchBids = useCallback(async () => {
     try {
-      const response = await fetch("http://localhost:8000/getAllBids");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/getAllBids`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch bids");
       }
@@ -88,13 +90,16 @@ const BidderDashboard: React.FC = () => {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:8000/createBidder", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ user }),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/createBidder`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ user }),
+        }
+      );
       if (!res.ok) {
         setCreated(false);
         throw new Error("Failed to create user");

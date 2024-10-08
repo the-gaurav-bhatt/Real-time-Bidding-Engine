@@ -19,7 +19,9 @@ const CreatorDashboard = ({ params }: { params: { bidId: string } }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("http://localhost:8000/bidders");
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/bidders`
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch users");
         }

@@ -65,13 +65,16 @@ export default function CreateBidPage() {
       const bidToSend = {
         ...bidData,
       };
-      const res = await fetch("http://localhost:8000/create-bid", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(bidToSend),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/create-bid`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bidToSend),
+        }
+      );
       if (!user) {
         saveUser(creator);
       }

@@ -28,7 +28,9 @@ export default function Dashboard() {
 
       try {
         console.log("Fetching bids for user: " + user);
-        const response = await fetch(`http://localhost:8000/get-bids/${user}`);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/get-bids/${user}`
+        );
 
         if (!response.ok) {
           throw new Error("Failed to fetch bids");
@@ -56,13 +58,16 @@ export default function Dashboard() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/publish-bid`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(bidToPublish),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/publish-bid`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bidToPublish),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to publish bid");
@@ -85,7 +90,7 @@ export default function Dashboard() {
   const handleRemoveBid = async (bidId: string) => {
     try {
       const response = await fetch(
-        `http://localhost:8000/remove-bid/${bidId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/remove-bid/${bidId}`,
         {
           method: "DELETE",
         }
