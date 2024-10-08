@@ -28,7 +28,7 @@ export const handleBidPublish = async (
     if (!updatedBid) {
       return res.status(404).json({ message: "Bid not found" });
     }
-    scheduleBitsStart(updatedBid._id, startTime);
+    scheduleBitsStart(updatedBid._id as string, startTime);
     // return res.status(404).json({ message: "Bid not found" });
 
     return res
