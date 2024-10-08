@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "pm2 start dist/server.js -i max"
+    "start": "pm2 start dist/server.js "
   },
   "dependencies": {
     "cors": "^2.8.5",
