@@ -14,12 +14,12 @@ const PORT = process.env.PORT || 8000;
 
 export const io = new Server(server, {
   cors: {
-    origin:
-      // "http://localhost:3000",
-      "https://real-time-bidding-engine.vercel.app/",
-    // "https://real-time-bidding-engine-thegauravbhatts-projects.vercel.app/",
-    // "https://real-time-bidding-engine-git-main-thegauravbhatts-projects.vercel.app/",
-
+    origin: [
+      "http://localhost:3000",
+      "https://real-time-bidding-engine.vercel.app",
+      "https://real-time-bidding-engine-thegauravbhatts-projects.vercel.app",
+      "https://real-time-bidding-engine-git-main-thegauravbhatts-projects.vercel.app",
+    ],
     methods: ["GET", "POST"],
   },
 });
