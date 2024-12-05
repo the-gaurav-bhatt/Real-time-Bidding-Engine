@@ -4,7 +4,7 @@ import cors from "cors";
 const app = express();
 app.use(
   cors({
-    origin: "https://real-time-bidding-engine.vercel.app",
+    origin: "https://real-time-bidding-engine-b8a0.onrender.com",
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
